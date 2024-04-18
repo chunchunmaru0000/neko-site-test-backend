@@ -18,6 +18,7 @@ namespace NekoBackend.Controllers
 		}
 
 		[HttpGet]
+		[Route("GetNekos")]
 		public JsonResult GetNekos()
 		{
 			string queryNeko = "select * from nekos";
