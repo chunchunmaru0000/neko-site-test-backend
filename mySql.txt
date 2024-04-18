@@ -1,0 +1,53 @@
+﻿create table nekos (
+id int,
+primary key(id),
+
+name text,
+image text,
+price decimal,
+desction text
+) 
+
+insert into nekos
+values(0, 
+"Владимир Владимирович Путин", 
+"https://upload.wikimedia.org/wikipedia/commons/1/13/Vladimir_Putin_September_5%2C_2022_(cropped).jpg", 
+999999999, 
+"президент  великий")
+insert into nekos
+values(1, 
+"Военный преступник", 
+"https://static.wikia.nocookie.net/nekopara/images/2/27/Ch_van_img_02.png/revision/latest?cb=20191220111813&path-prefix=ru", 
+1488888, 
+"кошка жена") 
+
+
+
+
+
+
+create table neko_photos (
+id int,
+foreign key(id) references nekos(id),
+
+photo text
+)
+
+insert into neko_photos values(0, "https://upload.wikimedia.org/wikipedia/commons/1/13/Vladimir_Putin_September_5%2C_2022_(cropped).jpg") 
+insert into neko_photos values(0, "https://upload.wikimedia.org/wikipedia/commons/d/d6/Vladimir_Putin_in_KGB_uniform.jpg") 
+
+
+
+
+
+create table specs(
+id int,
+foreign key(id) references nekos(id),
+
+spec text,
+spec_value text
+)
+
+insert into specs values
+(0, "возраст", "71 год"),
+(0, "должность", "президент Российской Федерации")

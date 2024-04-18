@@ -1,0 +1,6 @@
+@NekoBackend_HostAddress = http://localhost:5225
+
+GET {{NekoBackend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
