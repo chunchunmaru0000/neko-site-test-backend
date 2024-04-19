@@ -57,3 +57,4 @@ C:\Users\user\Documents\kptyata#\NekoBackend\obj\Release\net8.0\refint\NekoBacke
 C:\Users\user\Documents\kptyata#\NekoBackend\obj\Release\net8.0\NekoBackend.pdb
 C:\Users\user\Documents\kptyata#\NekoBackend\obj\Release\net8.0\NekoBackend.genruntimeconfig.cache
 C:\Users\user\Documents\kptyata#\NekoBackend\obj\Release\net8.0\ref\NekoBackend.dll
+C:\Users\user\Documents\kptyata#\NekoBackend\obj\Release\net8.0\NekoBackend.sourcelink.json

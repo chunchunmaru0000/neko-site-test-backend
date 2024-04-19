@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NekoBackend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+33554db3052cd0a1d960bd6367c821d34438bd35")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a177e738554bd506015dae7a525d44b8ce785dfb")]
 [assembly: System.Reflection.AssemblyProductAttribute("NekoBackend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NekoBackend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

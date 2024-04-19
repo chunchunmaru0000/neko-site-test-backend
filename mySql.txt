@@ -40,6 +40,20 @@ insert into neko_photos values(0, "https://upload.wikimedia.org/wikipedia/common
 
 
 
+
+create table neko_blobs(
+id int,
+foreign key(id) references nekos(id),
+
+image  blob
+)
+// INSERT INTO neko_blobs  VALUES (0, LOAD_FILE('C:\Users\user\Desktop\ph\PutinOnBear.png'));
+
+
+
+
+
+
 create table specs(
 id int,
 foreign key(id) references nekos(id),

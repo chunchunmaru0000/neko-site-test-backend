@@ -24,10 +24,12 @@ namespace NekoBackend.Controllers
 			string queryNeko = "select * from nekos";
 			string queryPhotos = "select * from neko_photos";
 			string querySpecs = "select * from specs";
+			string queryBlobs = "select * from neko_blobs";
 
 			DataTable nekos = new DataTable();
 			DataTable photos = new DataTable();
 			DataTable specs = new DataTable();
+			DataTable blobs = new DataTable();
 
 			string sqlDataSource = configuration.GetConnectionString("NekoCon")??throw new Exception("ОБОСАННАЯ ПАРАША");
 			MySqlDataReader reader;
@@ -55,11 +57,18 @@ namespace NekoBackend.Controllers
 					specs.Load(reader);
 					reader.Close();
 				}
+				// blobs
+				using (MySqlCommand command = new MySqlCommand(queryBlobs, connection))
+				{
+					reader = command.ExecuteReader();
+					blobs.Load(reader);
+					reader.Close();
+				}
 
 				connection.Close();
 			}
 
-			// photosd parse from table
+			// photos parse from table
 			Dictionary<string, List<string>> photosDict = new Dictionary<string, List<string>>();
 			foreach(DataRow row in photos.Rows)
 			{
@@ -69,6 +78,22 @@ namespace NekoBackend.Controllers
 					photosDict[photoId].Add(photoPhoto);
 				else
 					photosDict[photoId] = new List<string>() { photoPhoto };
+			}
+
+			// parse blobs to strings and add them to photosDict
+			Dictionary<string, byte[]> blobsDict = new Dictionary<string, byte[]>();
+			foreach (DataRow row in blobs.Rows)
+			{
+				string blobId = Convert.ToString(row["id"]) ?? "";
+
+				byte[] blobImage = row["image"] as byte[] ?? [];
+				var base64Image = Convert.ToBase64String(blobImage);
+				string blobStr = $"data:image/octet-stream;base64,{base64Image}";
+
+				if (photosDict.ContainsKey(blobId))
+					photosDict[blobId].Add(blobStr);
+				else
+					photosDict[blobId] = new List<string>() { blobStr };
 			}
 
 			// specs parse from table
