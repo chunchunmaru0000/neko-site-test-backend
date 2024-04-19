@@ -45,9 +45,9 @@ create table neko_blobs(
 id int,
 foreign key(id) references nekos(id),
 
-image  blob
+image  LONGBLOB
 )
-// INSERT INTO neko_blobs  VALUES (0, LOAD_FILE('C:\Users\user\Desktop\ph\PutinOnBear.png'));
+
 
 
 
