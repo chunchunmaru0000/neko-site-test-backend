@@ -13,13 +13,21 @@ values(0,
 "Владимир Владимирович Путин", 
 "https://upload.wikimedia.org/wikipedia/commons/1/13/Vladimir_Putin_September_5%2C_2022_(cropped).jpg", 
 999999999, 
-"президент  великий")
+"президент  великий");
 insert into nekos
 values(1, 
 "Военный преступник", 
 "https://static.wikia.nocookie.net/nekopara/images/2/27/Ch_van_img_02.png/revision/latest?cb=20191220111813&path-prefix=ru", 
 1488888, 
-"кошка жена") 
+"кошка жена") ;
+insert into nekos
+values(
+2, 
+"Пардо", 
+"любое", 
+123123123, 
+"Вор в законе.")
+
 
 
 
@@ -64,4 +72,7 @@ spec_value text
 
 insert into specs values
 (0, "возраст", "71 год"),
-(0, "должность", "президент Российской Федерации")
+(0, "должность", "президент Российской Федерации");
+insert into specs values
+(2, "возраст", "50000+ лет"),
+(2, "должность", "вор, торговец");

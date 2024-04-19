@@ -121,6 +121,9 @@ namespace NekoBackend.Controllers
 				string[] photosForThis = photosDict.Where(p => p.Key == sId).Select(p => p.Value.ToArray()).SingleOrDefault() ?? [];
 				Dictionary<string, string> specsForThis = specsDict.Where(s => s.Key == sId).Select(s => s.Value).SingleOrDefault() ?? new Dictionary<string, string>();
 
+				if (image == "любое")
+					image = photosForThis.ElementAtOrDefault(0) ?? "";
+
 				NekoPost neko = new()
 				{
 					Id = id,
