@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI.Relational;
 using NekoBackend.Models;
@@ -31,7 +32,7 @@ namespace NekoBackend.Controllers
 			DataTable specs = new DataTable();
 			DataTable blobs = new DataTable();
 
-			string sqlDataSource = configuration.GetConnectionString("NekoCon")??throw new Exception("ОБОСАННАЯ ПАРАША");
+			string sqlDataSource = configuration.GetConnectionString("NekoCon")??throw new Exception("ЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ");
 			MySqlDataReader reader;
 			using(MySqlConnection connection = new MySqlConnection(sqlDataSource))
 			{
@@ -138,6 +139,84 @@ namespace NekoBackend.Controllers
 			}
 
 			return new JsonResult(Posts);
+		}
+
+		[HttpPatch]
+		[Route("EditNeko")]
+		public JsonResult EditNeko(NekoPost neko)
+		{
+			try
+			{
+				int id = neko.Id;
+				string queryNeko = "update nekos set " +
+					"name = @name, " +
+					"image = @image, " +
+					"price = @price, " +
+					"desction = @desc " +
+					$"where id = {id}";
+
+				string querySpecsDelete = $"delete from specs where id = {id}";
+				string querySpecsInsert = "insert into specs values" + string.Join(", ", neko.Specifications.Select(s => $"({id}, \"{s.Key}\", \"{s.Value}\")"));
+
+				string[] photos = neko.Photos.Where(p => p.StartsWith("http")).ToArray();
+				string queryPhotosDelete = $"delete from neko_photos where id = {id}";
+				string queryPhotosInsert = "insert into neko_photos values" + string.Join(", ", photos.Select(p => $"({id}, \"{p}\")"));
+
+				string[] blobsStrings = neko.Photos.Where(p => !p.StartsWith("http")).Select(p => string.Join("", p.Split(',').Skip(1))).ToArray();
+				List<byte[]> blobs = blobsStrings.Select(Convert.FromBase64String).ToList();
+				string queryBlobsDelete = $"delete from neko_blobs where id = {id}";
+				string queryBlobsInsert = $"insert into neko_blobs values" + string.Join(", ", Enumerable.Range(0, blobs.Count).Select(e => $"({id}, @blob{e})"));
+
+				string sqlDataSource = configuration.GetConnectionString("NekoCon") ?? throw new Exception("ЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ");
+				using (MySqlConnection connection = new(sqlDataSource))
+				{
+					connection.Open();
+					using(MySqlTransaction transaction = connection.BeginTransaction())
+					{
+                        // simple nekos table upd
+                        using (MySqlCommand command = new(queryNeko, connection)) 
+						{
+							command.Parameters.AddWithValue("@name", neko.Name);
+							command.Parameters.AddWithValue("@price", neko.Price);
+							command.Parameters.AddWithValue("@image", neko.Image.Trim().ToLower() == "httpлюбое" ? "любое" : neko.Image);
+							command.Parameters.AddWithValue("@desc", neko.Description);
+							command.ExecuteNonQuery();
+						}
+                        // specs
+                        if (neko.Specifications.Count > 0)
+						{
+							using (MySqlCommand command = new(querySpecsDelete, connection)) { command.ExecuteNonQuery(); }
+							using (MySqlCommand command = new(querySpecsInsert, connection)) { command.ExecuteNonQuery(); }
+						}
+                        // photos
+                        if (photos.Length > 0)
+						{
+							using (MySqlCommand command = new(queryPhotosDelete, connection)) { command.ExecuteNonQuery(); }
+							using (MySqlCommand command = new(queryPhotosInsert, connection)) { command.ExecuteNonQuery(); }
+						}
+                        //blobs
+                        if (blobs.Count > 0)
+						{
+							using (MySqlCommand command = new(queryBlobsDelete, connection)) { command.ExecuteNonQuery(); }
+							using (MySqlCommand command = new(queryBlobsInsert, connection)) 
+							{
+								for (int i = 0; i < blobs.Count; i++)
+									command.Parameters.AddWithValue($"@blob{i}", blobs[i]);
+								command.ExecuteNonQuery();
+							}
+						}
+						transaction.Commit();
+					}
+					connection.Close();
+				}
+                Console.WriteLine("УРААААААААААААААА");
+                return new JsonResult("УДАЧНО ОБНОВЛЕННО");
+			}
+			catch (Exception e)
+			{
+                Console.WriteLine($"ОШИБКА: {e}");
+				return new JsonResult(new { IsSuccessStatusCode = false, Message =  e.Message });
+			}
 		}
 	}
 }

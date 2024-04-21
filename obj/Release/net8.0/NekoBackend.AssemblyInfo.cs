@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NekoBackend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3da27d1287821de6730cec76e1433a123de37a38")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+50a9dc6141d385a3e6895356ff7ec489d6f743e7")]
 [assembly: System.Reflection.AssemblyProductAttribute("NekoBackend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NekoBackend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

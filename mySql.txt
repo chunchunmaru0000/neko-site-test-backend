@@ -1,4 +1,14 @@
-﻿create table nekos (
+﻿ALTER TABLE nekos
+MODIFY COLUMN id INT AUTO_INCREMENT PRIMARY KEY; 
+ALTER TABLE neko_blobs
+DROP FOREIGN KEY neko_blob_ibfk_1;
+ALTER TABLE specs
+ADD CONSTRAINT specs_ibfk_1 foreign KEY(id) references nekos(id);
+
+
+
+
+create table nekos (
 id int,
 primary key(id),
 
