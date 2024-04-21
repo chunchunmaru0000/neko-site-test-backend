@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using MySql.Data.MySqlClient;
-using MySqlX.XDevAPI.Relational;
 using NekoBackend.Models;
 using System.Data;
 
@@ -9,14 +7,9 @@ namespace NekoBackend.Controllers
 {
 	[ApiController]
 	[Route("[controller]")]
-	public class NekoController : ControllerBase
+	public class NekoController(IConfiguration _configuration) : ControllerBase
 	{
-		private readonly IConfiguration configuration;
-
-		public NekoController(IConfiguration configuration)
-		{
-			this.configuration = configuration;
-		}
+		private readonly IConfiguration configuration = _configuration;
 
 		[HttpGet]
 		[Route("GetNekos")]
@@ -27,50 +20,54 @@ namespace NekoBackend.Controllers
 			string querySpecs = "select * from specs";
 			string queryBlobs = "select * from neko_blobs";
 
-			DataTable nekos = new DataTable();
-			DataTable photos = new DataTable();
-			DataTable specs = new DataTable();
-			DataTable blobs = new DataTable();
+			DataTable nekos = new();
+			DataTable photos = new();
+			DataTable specs = new();
+			DataTable blobs = new();
 
-			string sqlDataSource = configuration.GetConnectionString("NekoCon")??throw new Exception("ЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ");
+			string sqlDataSource = configuration.GetConnectionString("NekoCon") ?? throw new Exception("ЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ");
 			MySqlDataReader reader;
-			using(MySqlConnection connection = new MySqlConnection(sqlDataSource))
+			using(MySqlConnection connection = new(sqlDataSource))
 			{
 				connection.Open();
-				// post main info
-				using(MySqlCommand command = new MySqlCommand(queryNeko, connection))
+				using (MySqlTransaction transaction = connection.BeginTransaction())
 				{
-					reader = command.ExecuteReader();
-					nekos.Load(reader);
-					reader.Close();
-				}
-				// photos
-				using (MySqlCommand command = new MySqlCommand(queryPhotos, connection))
-				{
-					reader = command.ExecuteReader();
-					photos.Load(reader);
-					reader.Close();
-				}
-				// specs
-				using (MySqlCommand command = new MySqlCommand(querySpecs, connection))
-				{
-					reader = command.ExecuteReader();
-					specs.Load(reader);
-					reader.Close();
-				}
-				// blobs
-				using (MySqlCommand command = new MySqlCommand(queryBlobs, connection))
-				{
-					reader = command.ExecuteReader();
-					blobs.Load(reader);
-					reader.Close();
-				}
+					// post main info
+					using (MySqlCommand command = new(queryNeko, connection))
+					{
+						reader = command.ExecuteReader();
+						nekos.Load(reader);
+						reader.Close();
+					}
+					// photos
+					using (MySqlCommand command = new(queryPhotos, connection))
+					{
+						reader = command.ExecuteReader();
+						photos.Load(reader);
+						reader.Close();
+					}
+					// specs
+					using (MySqlCommand command = new(querySpecs, connection))
+					{
+						reader = command.ExecuteReader();
+						specs.Load(reader);
+						reader.Close();
+					}
+					// blobs
+					using (MySqlCommand command = new(queryBlobs, connection))
+					{
+						reader = command.ExecuteReader();
+						blobs.Load(reader);
+						reader.Close();
+					}
 
+					transaction.Commit();
+				}
 				connection.Close();
 			}
 
 			// photos parse from table
-			Dictionary<string, List<string>> photosDict = new Dictionary<string, List<string>>();
+			Dictionary<string, List<string>> photosDict = [];
 			foreach(DataRow row in photos.Rows)
 			{
 				string photoId = Convert.ToString(row["id"]) ?? "";
@@ -78,11 +75,11 @@ namespace NekoBackend.Controllers
 				if (photosDict.ContainsKey(photoId))
 					photosDict[photoId].Add(photoPhoto);
 				else
-					photosDict[photoId] = new List<string>() { photoPhoto };
+					photosDict[photoId] = [photoPhoto];
 			}
 
 			// parse blobs to strings and add them to photosDict
-			Dictionary<string, byte[]> blobsDict = new Dictionary<string, byte[]>();
+			Dictionary<string, byte[]> blobsDict = [];
 			foreach (DataRow row in blobs.Rows)
 			{
 				string blobId = Convert.ToString(row["id"]) ?? "";
@@ -94,11 +91,11 @@ namespace NekoBackend.Controllers
 				if (photosDict.ContainsKey(blobId))
 					photosDict[blobId].Add(blobStr);
 				else
-					photosDict[blobId] = new List<string>() { blobStr };
+					photosDict[blobId] = [blobStr];
 			}
 
 			// specs parse from table
-			Dictionary<string, Dictionary<string, string>> specsDict = new Dictionary<string, Dictionary<string, string>>();
+			Dictionary<string, Dictionary<string, string>> specsDict = [];
 			foreach (DataRow row in specs.Rows)
 			{
 				string specId = Convert.ToString(row["id"]) ?? "";
@@ -110,7 +107,7 @@ namespace NekoBackend.Controllers
 					specsDict[specId] = new Dictionary<string, string>() { { spec, specValue } };
 			}
 
-			List<NekoPost> Posts = new List<NekoPost>();
+			List<NekoPost> Posts = [];
 			foreach (DataRow row in nekos.Rows)
 			{
 				int id = Convert.ToInt32(row["id"]);
@@ -120,7 +117,7 @@ namespace NekoBackend.Controllers
 				decimal price = Convert.ToDecimal(row["price"]);
 				string description = Convert.ToString(row["desction"]) ?? "";
 				string[] photosForThis = photosDict.Where(p => p.Key == sId).Select(p => p.Value.ToArray()).SingleOrDefault() ?? [];
-				Dictionary<string, string> specsForThis = specsDict.Where(s => s.Key == sId).Select(s => s.Value).SingleOrDefault() ?? new Dictionary<string, string>();
+				Dictionary<string, string> specsForThis = specsDict.Where(s => s.Key == sId).Select(s => s.Value).SingleOrDefault() ?? [];
 
 				if (image == "любое")
 					image = photosForThis.ElementAtOrDefault(0) ?? "";
@@ -178,7 +175,7 @@ namespace NekoBackend.Controllers
 						{
 							command.Parameters.AddWithValue("@name", neko.Name);
 							command.Parameters.AddWithValue("@price", neko.Price);
-							command.Parameters.AddWithValue("@image", neko.Image.Trim().ToLower() == "httpлюбое" ? "любое" : neko.Image);
+							command.Parameters.AddWithValue("@image", neko.Image);
 							command.Parameters.AddWithValue("@desc", neko.Description);
 							command.ExecuteNonQuery();
 						}
@@ -216,6 +213,84 @@ namespace NekoBackend.Controllers
 			{
                 Console.WriteLine($"ОШИБКА: {e}");
 				return new JsonResult(new { IsSuccessStatusCode = false, Message =  e.Message });
+			}
+		}
+
+		[HttpPost]
+		[Route("AddNeko")]
+		public JsonResult AddNeko(NekoPost neko)
+		{
+			try
+			{
+				string queryNeko = "insert into nekos (name, image, price, desction) values(@name, @image, @price, @desc)";
+				string queryAll = "select id from nekos";
+
+				string sqlDataSource = configuration.GetConnectionString("NekoCon") ?? throw new Exception("ЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ");
+				MySqlDataReader reader;
+				DataTable idsTable = new();
+
+				using (MySqlConnection connection = new(sqlDataSource))
+				{
+					connection.Open();
+					// simple nekos table add
+					using (MySqlCommand command = new(queryNeko, connection))
+					{
+						Console.WriteLine(neko.Price);
+						command.Parameters.AddWithValue("@name", neko.Name);
+						command.Parameters.AddWithValue("@image", neko.Image);
+						command.Parameters.AddWithValue("@price", neko.Price);
+						command.Parameters.AddWithValue("@desc", neko.Description);
+						command.ExecuteNonQuery();
+					}
+					using (MySqlCommand command = new(queryAll, connection)) 
+					{ 
+						reader = command.ExecuteReader();
+						idsTable.Load(reader);
+						reader.Close();
+					}
+					connection.Close();
+				}
+				int id = 0;
+				foreach(DataRow row in idsTable.Rows)
+					id = Convert.ToInt32(row["id"]);
+
+				string querySpecsInsert = "insert into specs values" + string.Join(", ", neko.Specifications.Select(s => $"({id}, \"{s.Key}\", \"{s.Value}\")"));
+
+				string[] photos = neko.Photos.Where(p => p.StartsWith("http")).ToArray();
+				string queryPhotosInsert = "insert into neko_photos values" + string.Join(", ", photos.Select(p => $"({id}, \"{p}\")"));
+
+				string[] blobsStrings = neko.Photos.Where(p => !p.StartsWith("http")).Select(p => string.Join("", p.Split(',').Skip(1))).ToArray();
+				List<byte[]> blobs = blobsStrings.Select(Convert.FromBase64String).ToList();
+				string queryBlobsInsert = $"insert into neko_blobs values" + string.Join(", ", Enumerable.Range(0, blobs.Count).Select(e => $"({id}, @blob{e})"));
+
+				using (MySqlConnection connection = new(sqlDataSource))
+				{
+					connection.Open();
+					using (MySqlTransaction transaction = connection.BeginTransaction())
+					{
+						// specs
+						if (neko.Specifications.Count > 0) using (MySqlCommand command = new(querySpecsInsert, connection)) { command.ExecuteNonQuery(); }
+						// photos
+						if (photos.Length > 0) using (MySqlCommand command = new(queryPhotosInsert, connection)) { command.ExecuteNonQuery(); }
+						//blobs
+						if (blobs.Count > 0)
+							using (MySqlCommand command = new(queryBlobsInsert, connection))
+							{
+								for (int i = 0; i < blobs.Count; i++)
+									command.Parameters.AddWithValue($"@blob{i}", blobs[i]);
+								command.ExecuteNonQuery();
+							}
+						transaction.Commit();
+					}
+					connection.Close();
+				}
+				Console.WriteLine("УРААААААААААААААА");
+				return new JsonResult("УДАЧНО ОБНОВЛЕННО");
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine($"ОШИБКА: {e}");
+				return new JsonResult(e.Message);
 			}
 		}
 	}
