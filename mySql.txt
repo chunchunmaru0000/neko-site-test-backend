@@ -5,6 +5,8 @@ DROP FOREIGN KEY neko_blob_ibfk_1;
 ALTER TABLE specs
 ADD CONSTRAINT specs_ibfk_1 foreign KEY(id) references nekos(id);
 ALTER TABLE your_table_name MODIFY COLUMN price DECIMAL(20, 2);
+alter table neko_blobs change id blob_id int
+alter table neko_blobs add constraint foreign key(blob_id) references nekos(id)
 
 CREATE TABLE your_table_name (
     price DECIMAL(20, 2)

@@ -79,7 +79,6 @@ namespace NekoBackend.Controllers
 			}
 
 			// parse blobs to strings and add them to photosDict
-			Dictionary<string, byte[]> blobsDict = [];
 			foreach (DataRow row in blobs.Rows)
 			{
 				string blobId = Convert.ToString(row["id"]) ?? "";
@@ -116,8 +115,8 @@ namespace NekoBackend.Controllers
 				string image = Convert.ToString(row["image"]) ?? "";
 				decimal price = Convert.ToDecimal(row["price"]);
 				string description = Convert.ToString(row["desction"]) ?? "";
-				string[] photosForThis = photosDict.Where(p => p.Key == sId).Select(p => p.Value.ToArray()).SingleOrDefault() ?? [];
-				Dictionary<string, string> specsForThis = specsDict.Where(s => s.Key == sId).Select(s => s.Value).SingleOrDefault() ?? [];
+				string[] photosForThis = [..(photosDict.GetValueOrDefault(sId) ?? [])];
+				Dictionary<string, string> specsForThis = specsDict.GetValueOrDefault(sId) ?? [];
 
 				if (image == "любое")
 					image = photosForThis.ElementAtOrDefault(0) ?? "";
@@ -235,7 +234,6 @@ namespace NekoBackend.Controllers
 					// simple nekos table add
 					using (MySqlCommand command = new(queryNeko, connection))
 					{
-						Console.WriteLine(neko.Price);
 						command.Parameters.AddWithValue("@name", neko.Name);
 						command.Parameters.AddWithValue("@image", neko.Image);
 						command.Parameters.AddWithValue("@price", neko.Price);
@@ -248,24 +246,21 @@ namespace NekoBackend.Controllers
 						idsTable.Load(reader);
 						reader.Close();
 					}
-					connection.Close();
-				}
-				int id = 0;
-				foreach(DataRow row in idsTable.Rows)
-					id = Convert.ToInt32(row["id"]);
 
-				string querySpecsInsert = "insert into specs values" + string.Join(", ", neko.Specifications.Select(s => $"({id}, \"{s.Key}\", \"{s.Value}\")"));
+					int id = 0;
 
-				string[] photos = neko.Photos.Where(p => p.StartsWith("http")).ToArray();
-				string queryPhotosInsert = "insert into neko_photos values" + string.Join(", ", photos.Select(p => $"({id}, \"{p}\")"));
+					foreach(DataRow row in idsTable.Rows)
+						id = Convert.ToInt32(row["id"]);
 
-				string[] blobsStrings = neko.Photos.Where(p => !p.StartsWith("http")).Select(p => string.Join("", p.Split(',').Skip(1))).ToArray();
-				List<byte[]> blobs = blobsStrings.Select(Convert.FromBase64String).ToList();
-				string queryBlobsInsert = $"insert into neko_blobs values" + string.Join(", ", Enumerable.Range(0, blobs.Count).Select(e => $"({id}, @blob{e})"));
+					string querySpecsInsert = "insert into specs values" + string.Join(", ", neko.Specifications.Select(s => $"({id}, \"{s.Key}\", \"{s.Value}\")"));
 
-				using (MySqlConnection connection = new(sqlDataSource))
-				{
-					connection.Open();
+					string[] photos = neko.Photos.Where(p => p.StartsWith("http")).ToArray();
+					string queryPhotosInsert = "insert into neko_photos values" + string.Join(", ", photos.Select(p => $"({id}, \"{p}\")"));
+
+					string[] blobsStrings = neko.Photos.Where(p => !p.StartsWith("http")).Select(p => string.Join("", p.Split(',').Skip(1))).ToArray();
+					List<byte[]> blobs = blobsStrings.Select(Convert.FromBase64String).ToList();
+					string queryBlobsInsert = $"insert into neko_blobs values" + string.Join(", ", Enumerable.Range(0, blobs.Count).Select(e => $"({id}, @blob{e})"));
+
 					using (MySqlTransaction transaction = connection.BeginTransaction())
 					{
 						// specs
